@@ -1,0 +1,35 @@
+{
+  "name": "file_manager",
+  "version": "1.0.0",
+  "description": "file management",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AkwGaniu/file_manager.git"
+  },
+  "keywords": [
+    "file",
+    "management",
+    "repository"
+  ],
+  "author": "enny",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AkwGaniu/file_manager/issues"
+  },
+  "homepage": "https://github.com/AkwGaniu/file_manager#readme",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-fileupload": "^1.1.6",
+    "file-saver": "^2.0.2",
+    "mongoose": "^5.8.9",
+    "multer": "^1.4.2",
+    "ng2-file-upload": "^1.4.0",
+    "shortid": "^2.2.15"
+  }
+}
