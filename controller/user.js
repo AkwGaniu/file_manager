@@ -16,7 +16,7 @@ module.exports.register = async (req, res) => {
 
 
     //Get user details from the form and update the database
-    Model.User.find({email: req.body.email}, {name: false, password: false}, (err, data)  => {
+    Model.user.find({email: req.body.email}, {name: false, password: false}, (err, data)  => {
         if(err) throw err
         if(data.length === 0) {
             const record = {
