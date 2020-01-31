@@ -1,15 +1,34 @@
 const fs = require('fs');
 var path = require('path');
 var mime = require('mime');
-const fileModel = require('../model/schema')
+const Model = require('../model/schema')
 
 
 module.exports.fetch_files = async function(req, resp, next){
     try {
         // console.log(req.params)
-        let files = await fileModel.file.find({}, async (err, data) => {
+        let files = await Model.file.find({})
+        await Model.user.findOne({userId: req.params.userId}, async (err, data) => {
             if (err) throw err
-            resp.status(200).json(data)
+            let reply = {"file": files, "user": data}
+            resp.status(200).json(reply)
+        })
+    } catch (error) {
+        next(error)
+    }
+    
+}
+
+
+module.exports.search_file = async function(req, resp, next){
+    try {
+        let files = await Model.file.find({file_name: req.params.key})
+        console.log(files)
+
+        await Model.user.findOne({userId: req.params.userId}, async (err, data) => {
+            if (err) throw err
+            let reply = {"file": files, "user": data}
+            resp.status(200).json(reply)
         })
     } catch (error) {
         next(error)
@@ -19,7 +38,7 @@ module.exports.fetch_files = async function(req, resp, next){
 
 module.exports.file_upload = async function(req, resp, next) {
     try {
-        console.log(req.body)
+        console.log(req.body.user)
         let ts = Date.now();
 
         let date_ob = new Date(ts);
@@ -57,14 +76,13 @@ module.exports.file_upload = async function(req, resp, next) {
                                     file_name: file_name,
                                     file_path: file_path,
                                     file_type: file.mimetype,
-                                    userId: req.body.userId,
+                                    userId: req.body.user,
                                     date_created: date,
                                     time_created: time
                                 })
     
                                 await newFile.save((err, data) => {
                                     if(err) throw err
-                                    // resp.status(200).json("Upload successful")
                                 })
                             }
                         })
@@ -89,7 +107,7 @@ module.exports.file_upload = async function(req, resp, next) {
                                 file_name: file_name,
                                 file_path: file_path,
                                 file_type: files.mimetype,
-                                userId: req.body.userId,
+                                user_name: req.body.userId,
                                 date_created: date,
                                 time_created: time
                             })

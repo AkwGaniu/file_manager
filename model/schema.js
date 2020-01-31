@@ -20,10 +20,10 @@ let userSchema = new mongoose.Schema({
         max: 225,
         min: 8
     }
-}) 
+})
 
 
 //CREATE USER MODEL
-module.exports.User = mongoose.model("Users", userSchema)
+module.exports.user = mongoose.model("Users", userSchema)
 //URL MODEL
 module.exports.file = mongoose.model('file', fileSchema)

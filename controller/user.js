@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs')
 const shortId = require('shortid')
 
 
-const userModel = require('../model/schema')
+const Model = require('../model/schema')
 
 
 module.exports.register = async (req, res) => {
@@ -40,7 +40,7 @@ module.exports.register = async (req, res) => {
 
 module.exports.login = async (req, res) => {
     //Get user details from the login page and validate the login
-    const user = await userModel.User.findOne({email: req.body.email})
+    const user = await Model.user.findOne({email: req.body.email})
     if (!user) return res.status(404).json("Invalid email")
 
     // CONFIRM USER PASSWORD
