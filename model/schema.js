@@ -3,20 +3,29 @@ const mongoose = require('mongoose')
 const fileSchema = new mongoose.Schema({
     file_name: String,
     file_type: String,
+    search_name: String,
     date_created: String,
     time_created: String,
-    userId: String,
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "users"
+    },
     file_path: String
 })
 
 
 //CREATE USER SCHEMA
 let userSchema = new mongoose.Schema({
-    name: String,
-    email: String,
+    fname: String,
+    lname: String,
+    email: {
+        type:String,
+        required: true
+    },
     userId: String,
     password: {
         type: String,
+        required: true,
         max: 225,
         min: 8
     }
@@ -24,6 +33,6 @@ let userSchema = new mongoose.Schema({
 
 
 //CREATE USER MODEL
-module.exports.user = mongoose.model("Users", userSchema)
+module.exports.user = mongoose.model("users", userSchema)
 //URL MODEL
-module.exports.file = mongoose.model('file', fileSchema)
+module.exports.file = mongoose.model('files', fileSchema)

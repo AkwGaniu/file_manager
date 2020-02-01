@@ -20,13 +20,14 @@ module.exports.register = async (req, res) => {
         if(err) throw err
         if(data.length === 0) {
             const record = {
-                name: req.body.name,
+                lname: req.body.lname,
+                fname: req.body.fname,
                 email: req.body.email,
                 userId: userIdGen,
                 password: hashedPass
             }
 
-            Model.User(record).save((err, data) => {
+            Model.user(record).save((err, data) => {
             if(err) throw err
                 res.status(200).json("Success")
             })
@@ -46,11 +47,7 @@ module.exports.login = async (req, res) => {
     // CONFIRM USER PASSWORD
     const validPassword = await bcrypt.compare(req.body.password, user.password)
     if (!validPassword) return res.status(401).json("Invalid passsword")
-    res.status(200).json({
-        name: user.name,
-        email: user.email,
-        userId: user.userId
-    })
+    res.status(200).json(user)
 }
 
 

@@ -6,39 +6,26 @@ const Model = require('../model/schema')
 
 module.exports.fetch_files = async function(req, resp, next){
     try {
-        // console.log(req.params)
         let files = await Model.file.find({})
-        await Model.user.findOne({userId: req.params.userId}, async (err, data) => {
-            if (err) throw err
-            let reply = {"file": files, "user": data}
-            resp.status(200).json(reply)
-        })
+        .populate('user', ['lname', 'fname'])
+        resp.status(200).json(files)
     } catch (error) {
         next(error)
     }
     
 }
 
-
 module.exports.search_file = async function(req, resp, next){
     try {
-        let files = await Model.file.find({file_name: req.params.key})
-        console.log(files)
-
-        await Model.user.findOne({userId: req.params.userId}, async (err, data) => {
-            if (err) throw err
-            let reply = {"file": files, "user": data}
-            resp.status(200).json(reply)
-        })
+        let files = await Model.file.find({search_name: req.params.key}).populate("user", ["fname", "lname"])
+        resp.status(200).json(files)
     } catch (error) {
         next(error)
     }
-    
 }
 
 module.exports.file_upload = async function(req, resp, next) {
     try {
-        console.log(req.body.user)
         let ts = Date.now();
 
         let date_ob = new Date(ts);
@@ -55,32 +42,31 @@ module.exports.file_upload = async function(req, resp, next) {
         if (req.files) {
             let files = req.files.files
             if (files.length >= 2) {
-                console.log("more than one")
                 for (file of files) {
                     let file_name = file.name
                     file_path = './uploads/' + file_name
     
-                    let fileExist = await fileModel.file.findOne({file_name: file_name})
+                    let fileExist = await Model.file.findOne({file_name: file_name})
     
                     if (fileExist) {
-                        // resp.status(200).json(`A file with the file name ${file_name} already exist`)
                         continue
                     } else {
-    
+                        let end = file_name.indexOf(".")
+                        let search_name = file.name.slice(0, end)
                         file.mv(file_path, async function(err) {
                             if (err) {
                                 throw(err)
                             } else {
             
-                                let newFile = new fileModel.file ({
+                                let newFile = new Model.file ({
                                     file_name: file_name,
                                     file_path: file_path,
+                                    search_name: search_name,
                                     file_type: file.mimetype,
-                                    userId: req.body.user,
+                                    user: req.body.user,
                                     date_created: date,
                                     time_created: time
                                 })
-    
                                 await newFile.save((err, data) => {
                                     if(err) throw err
                                 })
@@ -90,11 +76,10 @@ module.exports.file_upload = async function(req, resp, next) {
                 }
                 resp.status(200).json("Files Uploaded successfully")
             } else {
-                console.log("just one")
                 let file_name = files.name
                 file_path = './uploads/' + file_name
 
-                let fileExist = await fileModel.file.findOne({file_name: file_name})
+                let fileExist = await Model.file.findOne({file_name: file_name})
 
                 if (fileExist) {
                     resp.status(200).json(`A file with the file name ${file_name} already exist`)
@@ -103,7 +88,7 @@ module.exports.file_upload = async function(req, resp, next) {
                         if (err) {
                             throw(err)
                         } else {            
-                            let newFile = new fileModel.file ({
+                            let newFile = new Model.file ({
                                 file_name: file_name,
                                 file_path: file_path,
                                 file_type: files.mimetype,
@@ -139,7 +124,7 @@ module.exports.delete_file = function(req, resp, next) {
          
         fs.unlink(`./uploads/${req.body.file_name}`, function(err){
             if(err) throw err
-            fileModel.file.findOneAndDelete({file_name: req.body.file_name}, (err, data) => {
+            Model.file.findOneAndDelete({file_name: req.body.file_name}, (err, data) => {
                 if (err) throw err
                 resp.status(200).json('File deleted successfully') 
             })
