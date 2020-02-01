@@ -92,7 +92,7 @@ module.exports.file_upload = async function(req, resp, next) {
                                 file_name: file_name,
                                 file_path: file_path,
                                 file_type: files.mimetype,
-                                user: req.body.userId,
+                                user: req.body.user,
                                 date_created: date,
                                 time_created: time
                             })
