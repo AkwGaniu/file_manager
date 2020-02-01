@@ -137,12 +137,19 @@ module.exports.delete_file = function(req, resp, next) {
 module.exports.download = function(req, resp, next){
     try {
         let path1 = __dirname
+        start1_dep =  path1.indexOf("controller")
         start = path1.indexOf("\\controller")
+
         end = path1.length
-        path11 = path1.slice(0, start)
-        let fileLocation =  path11+`\\uploads\\${req.params.file_name}`;
+
+        path_dep = path1.slice(0, start1_dep)
+        path_dev = path1.slice(0, start)
+
+        let deployment_path = path_dep + `uploads/${req.params.file_name}`
+        let fileLocation =  path_dev + `\\uploads\\${req.params.file_name}`;
+
         let file = req.params.file_name
-        resp.download(fileLocation, file);
+        resp.download(deployment_path, file);
         
     } catch (error) {
         next(error)
