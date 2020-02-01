@@ -45,7 +45,7 @@ module.exports.file_upload = async function(req, resp, next) {
                 for (file of files) {
                     let file_name = file.name
                     file_path = './uploads/' + file_name
-    
+
                     let fileExist = await Model.file.findOne({file_name: file_name})
     
                     if (fileExist) {
@@ -92,7 +92,7 @@ module.exports.file_upload = async function(req, resp, next) {
                                 file_name: file_name,
                                 file_path: file_path,
                                 file_type: files.mimetype,
-                                user_name: req.body.userId,
+                                user: req.body.userId,
                                 date_created: date,
                                 time_created: time
                             })
