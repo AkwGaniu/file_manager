@@ -53,13 +53,13 @@ app.use((error, req, resp, next) => {
     resp.json({
         status: error.status,
         message: error.message,
-        // stack: error.stack
+        stack: error.stack
     })
 })
 
 
 //LISTEN TO PORT
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 5000
 
 app.listen(PORT, (err) => {
     if(err) throw err

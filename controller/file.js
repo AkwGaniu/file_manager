@@ -1,8 +1,24 @@
 const fs = require('fs');
-var path = require('path');
-var mime = require('mime');
+const cloudinary = require('cloudinary')
 const Model = require('../model/schema')
 
+// MULTER
+const multer = require('multer')
+const storage = multer.diskStorage({
+  destination: function(req, file, cb) {
+    cb(null, 'uploads/')
+  },
+  filename: function(req, file, cb) {
+    console.log(file)
+    cb(null, file.originalname)
+  }
+})
+
+cloudinary.config({ 
+    cloud_name: 'djxyqrkmi', 
+    api_key: '936229992257755', 
+    api_secret: 'f2EmndyU3QzODgVQ6_VP8LnFF3A' 
+  });
 
 module.exports.fetch_files = async function(req, resp, next){
     try {
@@ -17,7 +33,7 @@ module.exports.fetch_files = async function(req, resp, next){
 
 module.exports.search_file = async function(req, resp, next){
     try {
-        let files = await Model.file.find({search_name: req.params.key}).populate("user", ["fname", "lname"])
+        let files = await Model.file.find({file_name: req.params.key}).populate("user", ["fname", "lname"])
         resp.status(200).json(files)
     } catch (error) {
         next(error)
@@ -36,73 +52,111 @@ module.exports.file_upload = async function(req, resp, next) {
         let min = date_ob.getMinutes()
         let seconds = date_ob.getSeconds()
 
-        let date = `${day}-${month}-${year}`
-        let time = `${hour}:${min}:${seconds}`
+        let date = `${day}/${month}/${year}`
+        let time = `${hour}:${min}`
 
         if (req.files) {
-            let files = req.files.files
-            if (files.length >= 2) {
-                for (file of files) {
-                    let file_name = file.name
-                    file_path = './uploads/' + file_name
+            let files = req.files.file
+            const allowed_files = [ ".jpeg", ".JPEG", ".jpg", ".JPG", ".PNG", ".png", ".ppm", ".pgm", ".webp", ".pbm", ".tiff", ".pdf", ".PDF", ".svg"]
+            let existing_files = []
+            let all_files = []
 
-                    let fileExist = await Model.file.findOne({file_name: file_name})
-    
-                    if (fileExist) {
-                        continue
+            if (files.length >= 2) {
+                // for (file of files) 
+                
+                for(let i = 0; i<= files.length; i++){
+                    let file_name = files[i].name
+                    file_path = './uploads/' + file_name
+                    let start = file_name.indexOf(".")
+                    let file_type = files[i].name.slice(start, files[i].name.length)
+
+                    all_files.push(file_path)
+
+                    if (allowed_files.includes(file_type)) {
+
+                        let fileExist = await Model.file.findOne({file_real_name: file_name})
+
+                        if (fileExist) {
+                            existing_files.push(file_name)
+                            continue
+                        } else {
+                            files[i].mv(file_path, async function(err) {
+                                if (err) throw(err)
+                                cloudinary.v2.uploader.upload(file_path, async function(error, result) {
+                                    if (error) return next(error)
+                                    let newFile = new Model.file ({
+                                        file_real_name: file_name,
+                                        file_name: result.original_filename,
+                                        file_path: result.secure_url,
+                                        file_type: result.format,
+                                        user: req.body.user,
+                                        date_created: date,
+                                        time_created: time
+                                    })
+
+
+                                    await newFile.save((err, data) => {
+                                        if(err) throw err
+                                        console.log(file_path)                                            
+                                    })
+                                })
+                                
+                            })
+                        }
                     } else {
-                        let end = file_name.indexOf(".")
-                        let search_name = file.name.slice(0, end)
-                        file.mv(file_path, async function(err) {
-                            if (err) {
-                                throw(err)
-                            } else {
-            
-                                let newFile = new Model.file ({
-                                    file_name: file_name,
-                                    file_path: file_path,
-                                    search_name: search_name,
-                                    file_type: file.mimetype,
-                                    user: req.body.user,
-                                    date_created: date,
-                                    time_created: time
-                                })
-                                await newFile.save((err, data) => {
-                                    if(err) throw err
-                                })
-                            }
-                        })
+                        return resp.status(401).json("The selected files contain unsupported file format")
+                        break
                     }
+                    console.log(i)
                 }
-                resp.status(200).json("Files Uploaded successfully")
+
+                console.log(all_files)
+
+                if (existing_files.length > 0) {
+                    let reply = {"Existing_files": existing_files}
+                    return resp.status(200).json(reply)
+                } else {
+                    return resp.status(200).json("Files Uploaded successfully")
+                }
             } else {
                 let file_name = files.name
                 file_path = './uploads/' + file_name
 
-                let fileExist = await Model.file.findOne({file_name: file_name})
+                let start = file_name.indexOf(".")
+                let file_type = file_name.slice(start, file_name.length)
 
-                if (fileExist) {
-                    resp.status(200).json(`A file with the file name ${file_name} already exist`)
-                } else {    
-                    files.mv(file_path, async function(err) {
-                        if (err) {
-                            throw(err)
-                        } else {            
-                            let newFile = new Model.file ({
-                                file_name: file_name,
-                                file_path: file_path,
-                                file_type: files.mimetype,
-                                user: req.body.user,
-                                date_created: date,
-                                time_created: time
-                            })
+                if (allowed_files.includes(file_type)) {
 
-                            await newFile.save((err, data) => {
-                                if(err) throw err
-                                resp.status(200).json("Upload successful")
+                    let fileExist = await Model.file.findOne({file_real_name: file_name})
+
+                    if (fileExist) {
+                        return resp.status(200).json(`A file with the file name ${file_name} already exist`)
+                    } else {
+                        files.mv(file_path, async function(err) {
+                            if (err) throw(err)
+                            
+                            cloudinary.v2.uploader.upload(file_path, function(error, result) {
+                                if (error) return next(error)
+                                let newFile = new Model.file ({
+                                    file_real_name: file_name,
+                                    file_name: result.original_filename,
+                                    file_path: result.url,
+                                    file_type: result.format,
+                                    user: req.body.user,
+                                    date_created: date,
+                                    time_created: time
+                                })
+
+                                newFile.save((err, data) => {
+                                    if(err) throw err
+                                    fs.unlinkSync(file_path)
+                                    resp.status(200).json("Upload successful")
+                                })
                             })
-                        }
-                    })
+                        })
+                    } 
+                } else {
+                    return resp.status(200).json("The selected file format is not allowed")
                 }
             }
             
@@ -115,56 +169,12 @@ module.exports.file_upload = async function(req, resp, next) {
 }
 
 module.exports.delete_file = function(req, resp, next) {
-    try {
-        // fs.stat('./uploads/amdalat.jeg', function (err, stats) {
-        //     if (err) throw err
-        //     console.log(stats);//here we got all information of file in stats variable
-    // });
-
-         
-        fs.unlink(`./uploads/${req.body.file_name}`, function(err){
-            if(err) throw err
-            Model.file.findOneAndDelete({file_name: req.body.file_name}, (err, data) => {
-                if (err) throw err
-                resp.status(200).json('File deleted successfully') 
-            })
-        }) 
+    try {         
+        Model.file.findOneAndDelete({file_real_name: req.body.file_name}, (err, data) => {
+            if (err) throw err
+            resp.status(200).json('File deleted successfully') 
+        })
     } catch (error) {
         next(error)
     }
-}
-
-module.exports.download = function(req, resp, next){
-    try {
-        let path1 = __dirname
-        start1_dep =  path1.indexOf("controller")
-        start = path1.indexOf("\\controller")
-
-        end = path1.length
-
-        path_dep = path1.slice(0, start1_dep)
-        path_dev = path1.slice(0, start)
-
-        let deployment_path = path_dep + `uploads/${req.params.file_name}`
-        let fileLocation =  path_dev + `\\uploads\\${req.params.file_name}`;
-
-        let file = req.params.file_name
-        resp.download(deployment_path, file);
-        
-    } catch (error) {
-        next(error)
-    }  
-}
-
-module.exports.preview_file = function(req, resp, next){
-    try {
-        let path1 = __dirname
-        start = path1.indexOf("\\controller")
-        end = path1.length
-        path11 = path1.slice(0, start)
-        let fileLocation =  path11+`\\uploads\\${req.params.file_name}`
-        resp.status(200).json({"path":fileLocation})
-    } catch (error) {
-        next(error)
-    }  
 }
