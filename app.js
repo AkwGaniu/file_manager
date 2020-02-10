@@ -53,7 +53,7 @@ app.use((error, req, resp, next) => {
     resp.json({
         status: error.status,
         message: error.message,
-        stack: error.stack
+        // stack: error.stack
     })
 })
 
