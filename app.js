@@ -2,6 +2,7 @@ const express = require('express')
 const mongoose = require('mongoose')
 const dotenv = require('dotenv')
 const upload_file= require('express-fileupload')
+const fs = require('fs')
 
 //IMPORT ROUTES
 const file_routes  = require('./router/file_route')
@@ -41,9 +42,8 @@ app.use('/file', file_routes)
 app.use('/user', userRouter)
 
 app.use((req, resp, next) => {
-    const err = new Error("Page not found")
-    err.status = 404
-    next(err)
+    resp.writeHeader(200, {"Content-Type": "text/html"})
+    fs.createReadStream(__dirname + "/404.html").pipe(res)
 })
 
 //Custom Error Handler middleware
