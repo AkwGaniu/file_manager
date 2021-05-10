@@ -1,5 +1,6 @@
 const fs = require('fs');
 const cloudinary = require('cloudinary')
+
 const Model = require('../model/schema')
 
 // MULTER
@@ -9,7 +10,6 @@ const storage = multer.diskStorage({
     cb(null, 'uploads/')
   },
   filename: function(req, file, cb) {
-    console.log(file)
     cb(null, file.originalname)
   }
 })
@@ -18,7 +18,7 @@ cloudinary.config({
     cloud_name: 'djxyqrkmi', 
     api_key: '936229992257755', 
     api_secret: 'f2EmndyU3QzODgVQ6_VP8LnFF3A' 
-  });
+});
 
 module.exports.fetch_files = async function(req, resp, next){
     try {
@@ -43,7 +43,6 @@ module.exports.search_file = async function(req, resp, next){
 module.exports.file_upload = async function(req, resp, next) {
     try {
         let ts = Date.now();
-
         let date_ob = new Date(ts);
         let day = date_ob.getDate();
         let month = date_ob.getMonth() + 1;
@@ -107,11 +106,7 @@ module.exports.file_upload = async function(req, resp, next) {
                         return resp.status(401).json("The selected files contain unsupported file format")
                         break
                     }
-                    console.log(i)
                 }
-
-                console.log(all_files)
-
                 if (existing_files.length > 0) {
                     let reply = {"Existing_files": existing_files}
                     return resp.status(200).json(reply)
@@ -149,7 +144,6 @@ module.exports.file_upload = async function(req, resp, next) {
 
                                 newFile.save((err, data) => {
                                     if(err) throw err
-                                    fs.unlinkSync(file_path)
                                     resp.status(200).json("Upload successful")
                                 })
                             })
@@ -159,7 +153,6 @@ module.exports.file_upload = async function(req, resp, next) {
                     return resp.status(200).json("The selected file format is not allowed")
                 }
             }
-            
         } else {
             resp.status(200).json("I can't find any file here. Please choose a file and try again")
         }
